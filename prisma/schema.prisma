@@ -1,0 +1,121 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mongodb"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id                    String          @id @default(auto()) @map("_id") @db.ObjectId
+  email                 String          @unique
+  name                  String?
+  password              String?
+  googleId              String?
+  image                 String?
+  createdAt             DateTime        @default(now())
+  updatedAt             DateTime        @updatedAt
+
+  // Friend relationships
+  sentFriendRequests    FriendRequest[] @relation("sentRequests")
+  receivedFriendRequests FriendRequest[] @relation("receivedRequests")
+  friends               Friendship[]    @relation("userFriends")
+  friendOf              Friendship[]    @relation("friendOf")
+
+  // Question tracking
+  solvedQuestions       UserQuestion[]
+  
+  // Daily goals
+  dailyGoals            DailyGoal[]
+
+  @@index([email])
+}
+
+model FriendRequest {
+  id        String   @id @default(auto()) @map("_id") @db.ObjectId
+  senderId  String   @db.ObjectId
+  sender    User     @relation("sentRequests", fields: [senderId], references: [id], onDelete: Cascade)
+  
+  receiverId String  @db.ObjectId
+  receiver  User     @relation("receivedRequests", fields: [receiverId], references: [id], onDelete: Cascade)
+  
+  status    String   @default("pending") // pending, accepted, rejected
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([senderId, receiverId])
+  @@index([senderId])
+  @@index([receiverId])
+}
+
+model Friendship {
+  id        String   @id @default(auto()) @map("_id") @db.ObjectId
+  userId    String   @db.ObjectId
+  user      User     @relation("userFriends", fields: [userId], references: [id], onDelete: Cascade)
+  
+  friendId  String   @db.ObjectId
+  friend    User     @relation("friendOf", fields: [friendId], references: [id], onDelete: Cascade)
+  
+  createdAt DateTime @default(now())
+
+  @@unique([userId, friendId])
+  @@index([userId])
+  @@index([friendId])
+}
+
+model Question {
+  id              String          @id @default(auto()) @map("_id") @db.ObjectId
+  title           String
+  difficulty      String          // Easy, Medium, Hard
+  category        String
+  leetcodeUrl     String
+  description     String?
+  topicTags       String[]
+  createdAt       DateTime        @default(now())
+
+  // Question progress tracking
+  userQuestions   UserQuestion[]
+
+  @@index([category])
+  @@index([difficulty])
+}
+
+model UserQuestion {
+  id              String          @id @default(auto()) @map("_id") @db.ObjectId
+  userId          String          @db.ObjectId
+  user            User            @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  questionId      String          @db.ObjectId
+  question        Question        @relation(fields: [questionId], references: [id], onDelete: Cascade)
+  
+  solved          Boolean         @default(false)
+  codeApproach    String?
+  notes           String?
+  solvedAt        DateTime?
+  createdAt       DateTime        @default(now())
+  updatedAt       DateTime        @updatedAt
+
+  @@unique([userId, questionId])
+  @@index([userId])
+  @@index([questionId])
+}
+
+model DailyGoal {
+  id              String          @id @default(auto()) @map("_id") @db.ObjectId
+  userId          String          @db.ObjectId
+  user            User            @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  questionsPerDay Int             @default(2)
+  selectedQuestions String[]       // IDs of questions to solve
+  date            DateTime
+  
+  createdAt       DateTime        @default(now())
+  updatedAt       DateTime        @updatedAt
+
+  @@unique([userId, date])
+  @@index([userId])
+}
