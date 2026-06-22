@@ -445,7 +445,7 @@ export default function DashboardPage() {
               Leaderboard
             </h3>
             <div className="space-y-3">
-              {[...friends, { id: session?.user?.id, name: "You (Current User)", email: "" }]
+              {[...friends, { id: (session?.user as any)?.id, name: "You (Current User)", email: "" }]
                 .map((friend: any, index) => (
                   <div
                     key={friend.id}

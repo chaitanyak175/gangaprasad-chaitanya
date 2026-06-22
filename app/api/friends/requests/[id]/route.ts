@@ -5,9 +5,10 @@ import { prisma } from "@/lib/prisma";
 
 export async function POST(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const { id } = await params;
     const session = await getServerSession(authOptions);
 
     if (!session?.user?.id) {
@@ -24,7 +25,7 @@ export async function POST(
     }
 
     const friendRequest = await prisma.friendRequest.findUnique({
-      where: { id: params.id },
+      where: { id },
     });
 
     if (!friendRequest) {
@@ -61,7 +62,7 @@ export async function POST(
 
     // Update request status
     const updatedRequest = await prisma.friendRequest.update({
-      where: { id: params.id },
+      where: { id },
       data: { status: action === "accept" ? "accepted" : "rejected" },
     });
 

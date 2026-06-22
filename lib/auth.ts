@@ -1,6 +1,8 @@
 import { PrismaAdapter } from "@next-auth/prisma-adapter";
 import CredentialsProvider from "next-auth/providers/credentials";
 import GoogleProvider from "next-auth/providers/google";
+import type { Session, User } from "next-auth";
+import type { JWT } from "next-auth/jwt";
 import { compare } from "bcryptjs";
 import { prisma } from "./prisma";
 
@@ -49,9 +51,9 @@ export const authOptions = {
     }),
   ],
   callbacks: {
-    async session({ session, user }) {
+    async session({ session, user }: { session: Session; user: User }) {
       if (session.user) {
-        session.user.id = user.id;
+        (session.user as any).id = user.id;
       }
       return session;
     },
@@ -60,3 +62,15 @@ export const authOptions = {
     signIn: "/auth/signin",
   },
 };
+
+// Type declarations
+declare module "next-auth" {
+  interface Session {
+    user: {
+      id: string;
+      name?: string | null;
+      email?: string | null;
+      image?: string | null;
+    };
+  }
+}

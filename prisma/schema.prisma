@@ -31,8 +31,6 @@ model User {
   
   // Daily goals
   dailyGoals            DailyGoal[]
-
-  @@index([email])
 }
 
 model FriendRequest {

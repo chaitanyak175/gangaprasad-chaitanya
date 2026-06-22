@@ -5,9 +5,10 @@ import { prisma } from "@/lib/prisma";
 
 export async function GET(
   request: NextRequest,
-  { params }: { params: { questionId: string } }
+  { params }: { params: Promise<{ questionId: string }> }
 ) {
   try {
+    const { questionId } = await params;
     const session = await getServerSession(authOptions);
 
     if (!session?.user?.id) {
@@ -30,7 +31,7 @@ export async function GET(
           where: {
             userId_questionId: {
               userId: f.friendId,
-              questionId: params.questionId,
+              questionId,
             },
           },
         });
